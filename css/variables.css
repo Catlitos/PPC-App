@@ -1,0 +1,17 @@
+:root {
+  --ink:         #1a1a2e;
+  --ink-soft:    #2d2d4e;
+  --cream:       #faf8f4;
+  --warm:        #f5f0e8;
+  --gold:        #c9a84c;
+  --gold-light:  #e8d49a;
+  --teal:        #2a7c6f;
+  --teal-light:  #e8f4f2;
+  --rose:        #c94c4c;
+  --rose-light:  #f4e8e8;
+  --amber:       #c97a2a;
+  --amber-light: #f4ede0;
+  --border:      rgba(26,26,46,0.1);
+  --shadow:      0 4px 24px rgba(26,26,46,0.08);
+  --radius:      16px;
+}
