@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PredicApp — Exhibidores</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,900;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- CSS — cargado en orden de dependencia -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/board.css">
+  <link rel="stylesheet" href="css/modal.css">
+
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <div class="nav-brand">Predic<span>App</span></div>
+  <div class="nav-actions">
+    <span id="navUser"></span>
+    <button class="nav-btn" id="btnLoginNav" onclick="App.openLoginModal()">🔐 Encargado</button>
+    <button class="nav-btn btn-danger" id="btnLogoutNav" style="display:none" onclick="App.logout()">Salir</button>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-eyebrow">Gestión de Turnos</div>
+  <h1>Predicación <em>Pública</em></h1>
+  <p class="hero-sub">Exhibidores · Semana actual · Todos los puntos</p>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow"></div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active"   onclick="App.switchTab('tablero')">📅 Tablero Semanal</button>
+    <button class="tab-btn"          onclick="App.switchTab('reservar')">➕ Reservar Turno</button>
+    <button class="tab-btn"          onclick="App.switchTab('hermanos')">👥 Participantes</button>
+    <button class="tab-btn admin-only" onclick="App.switchTab('admin')">🔐 Admin</button>
+  </div>
+
+  <!-- TABLERO -->
+  <div class="panel active" id="panel-tablero">
+    <div class="card" style="padding:20px">
+      <div class="board-header">
+        <div class="week-nav">
+          <button class="btn btn-ghost btn-sm" onclick="App.changeWeek(-1)">← Ant.</button>
+          <div class="week-label" id="weekLabel">—</div>
+          <button class="btn btn-ghost btn-sm" onclick="App.changeWeek(1)">Sig. →</button>
+        </div>
+        <div class="filter-row">
+          <button class="filter-chip active" onclick="App.setFilter(this,'all')">Todos</button>
+          <button class="filter-chip"        onclick="App.setFilter(this,'libre')">🟢 Disponible</button>
+          <button class="filter-chip"        onclick="App.setFilter(this,'parcial')">🟡 Parcial</button>
+          <button class="filter-chip"        onclick="App.setFilter(this,'completo')">🔴 Completo</button>
+        </div>
+      </div>
+      <div class="punto-filter" id="puntoFilter"></div>
+      <div class="board-wrap">
+        <table class="board-table" id="boardTable">
+          <thead id="boardHead"></thead>
+          <tbody id="boardBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <p style="font-size:0.8rem;color:var(--ink-soft);text-align:center;margin-top:8px">
+      💡 Haz clic en cualquier celda para reservar o ver el turno
+    </p>
+  </div>
+
+  <!-- RESERVAR -->
+  <div class="panel" id="panel-reservar">
+    <div class="card">
+      <div class="card-title">📋 Nueva Reserva</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Tu Nombre</label>
+          <select id="resNombre">
+            <option value="">— Selecciona tu nombre —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Punto de Predicación</label>
+          <select id="resPunto">
+            <option value="">— Selecciona un punto —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Día</label>
+          <select id="resDia"></select>
+        </div>
+        <div class="field">
+          <label>Horario</label>
+          <select id="resHora">
+            <option value="">— Selecciona horario —</option>
+            <option value="7:00 – 9:00">🌅 7:00 – 9:00</option>
+            <option value="9:00 – 11:00">☀️ 9:00 – 11:00</option>
+            <option value="11:00 – 1:00">🌤 11:00 – 1:00</option>
+            <option value="1:00 – 3:00">🌞 1:00 – 3:00</option>
+            <option value="3:00 – 5:00">🌆 3:00 – 5:00</option>
+            <option value="5:00 – 7:00">🌇 5:00 – 7:00</option>
+          </select>
+        </div>
+      </div>
+      <div id="resSlotInfo" style="margin-top:16px"></div>
+      <div style="margin-top:20px">
+        <button class="btn btn-teal" onclick="App.confirmarReserva()">✅ Confirmar Reserva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERMANOS -->
+  <div class="panel" id="panel-hermanos">
+    <div class="section-header">
+      <div class="section-title">Participantes Registrados</div>
+      <button class="btn btn-primary" onclick="App.openAddHermanoModal()">+ Agregar</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="hermanosTableWrap"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="panel" id="panel-admin">
+    <div class="section-header">
+      <div class="section-title">Panel del Encargado</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📍 Gestionar Puntos</div>
+      <div id="adminPuntosList" style="margin-bottom:16px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="newPuntoInput"
+          placeholder="Nuevo punto de predicación..."
+          style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.9rem;background:var(--cream);">
+        <button class="btn btn-primary" onclick="App.addPunto()">+ Agregar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🗑️ Gestión de Turnos</div>
+      <div id="adminTurnosList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👤 Gestionar Encargados</div>
+      <div id="adminUsuariosList" style="margin-bottom:20px"></div>
+      <button class="btn btn-primary" onclick="App.openAddUsuarioModal()">+ Nuevo Encargado</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 Cambiar Mi Contraseña</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Contraseña Actual</label>
+          <input type="password" id="pwActual" placeholder="••••••" autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label>Nueva Contraseña</label>
+          <input type="password" id="pwNueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>Confirmar Nueva</label>
+          <input type="password" id="pwConfirm" placeholder="Repetí la nueva" autocomplete="new-password">
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn btn-teal" onclick="App.cambiarPassword()">🔑 Actualizar Contraseña</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 Auditoría</div>
+      <div id="adminAuditoria"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ── MODALS ── -->
+
+<!-- Login -->
+<div class="modal-backdrop" id="loginModal">
+  <div class="modal login-wrap" style="max-width:360px">
+    <div style="text-align:center">
+      <div class="login-icon">🔐</div>
+      <div class="modal-title">Acceso Encargado</div>
+      <div class="modal-sub">Ingresa tus credenciales</div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Usuario</label>
+      <input type="text" id="loginUser" placeholder="tu-usuario" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••" autocomplete="current-password">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"   onclick="App.closeModal('loginModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="App.doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agregar Hermano -->
+<div class="modal-backdrop" id="addHermanoModal">
+  <div class="modal">
+    <div class="modal-title">➕ Agregar Participante</div>
+    <div class="modal-sub">Registra un hermano para los exhibidores</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Nombre Completo</label>
+        <input type="text" id="hNombre" placeholder="Nombre y Apellido">
+      </div>
+      <div class="field">
+        <label>Teléfono</label>
+        <input type="tel" id="hTel" placeholder="+54 9 ...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="App.closeModal('addHermanoModal')">Cancelar</button>
+      <button class="btn btn-teal"  onclick="App.saveHermano()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detalle de Slot -->
+<div class="modal-backdrop" id="slotModal">
+  <div class="modal">
+    <div class="modal-title" id="slotModalTitle">Turno</div>
+    <div class="modal-sub"   id="slotModalSub"></div>
+    <div class="slot-info-box" id="slotInfoBox"></div>
+    <div id="slotHermanosList" class="hermano-list"></div>
+    <div id="slotModalAlert" style="margin-top:12px"></div>
+    <div class="modal-footer" id="slotModalFooter"></div>
+  </div>
+</div>
+
+<!-- Nuevo Encargado -->
+<div class="modal-backdrop" id="addUsuarioModal">
+  <div class="modal">
+    <div class="modal-title">👤 Nuevo Encargado</div>
+    <div class="modal-sub">El nuevo encargado podrá acceder al panel de administración</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Nombre Completo</label>
+        <input type="text" id="uNombre" placeholder="Nombre y Apellido">
+      </div>
+      <div class="field">
+        <label>Nombre de Usuario</label>
+        <input type="text" id="uUser" placeholder="ej: encargado2" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="uPass" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Confirmar Contraseña</label>
+        <input type="password" id="uPassConfirm" placeholder="Repetí la contraseña" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"   onclick="App.closeModal('addUsuarioModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="App.saveUsuario()">Crear Encargado</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- JS — un solo script, tipo module -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
